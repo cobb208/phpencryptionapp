@@ -1,6 +1,6 @@
 <?php
 
 $sql_hostname = 'localhost';
-$sql_username = 'cobb208';
-$sql_password = 'HOme271!!!';
+$sql_username = 'YOURUSERNAME';
+$sql_password = 'YOURPASSWORD';
 $sql_database = 'encryptiontest';
