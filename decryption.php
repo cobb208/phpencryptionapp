@@ -1,45 +1,71 @@
 <?php
+namespace Encryption\Decryption;
+
 require_once('connection.php');
+require_once('validation.php');
 
-if(isset($_POST['yourEmail']) and isset($_POST['password']))
+use DateTime;
+use DateTimeZone;
+use Encryption\Validation\ValidationRules;
+use Exception;
+
+if($_SERVER['REQUEST_METHOD'] == 'POST')
 {
-    $receiver_email = filter_var($_POST['yourEmail'], FILTER_SANITIZE_EMAIL);
-    $passphrase = hash('sha256', $_POST['password']);
+    session_start();
+    ValidationRules::validate_csrf_token();
 
-    if(!isset($sql_hostname) or !isset($sql_username) or !isset($sql_password) or !isset($sql_database)) { die; }
-    $mysqli = new mysqli($sql_hostname, $sql_username, $sql_password, $sql_database);
+    if(!isset($mysqli)) {
+        http_response_code(500);
+        exit();
+    }
 
-    $sql =
-        "SELECT iv, filepath, tag FROM files WHERE passcode = '" . $passphrase . "' AND receiver_email = '" . $receiver_email . "' LIMIT 1";
+    $receiver_email = ValidationRules::validate_email($_POST['yourEmail']);
+    if(!$receiver_email) {
+        http_response_code(500);
+        exit();
+    }
 
+    $password = $_POST['password'];
+    $passphrase = $_POST['passphrase'];
 
-    $result = $mysqli->query($sql);
+    $stmt = $mysqli->prepare('SELECT iv, filepath, tag FROM files WHERE passphrase = ? AND receiver_email = ?  LIMIT  1');
+    $stmt->bind_param('ss', $passphrase, $receiver_email);
+
+    if(!$stmt->execute())
+    {
+        http_response_code(500);
+        exit();
+    }
+
+    $result = $stmt->get_result();
+    if(!$result)
+    {
+        http_response_code(404);
+    }
 
     $result_filepath = '';
     $result_iv = '';
     $result_tag = '';
 
-    if($result->num_rows > 0)
+    while($row = $result->fetch_assoc())
     {
-        while($row = $result->fetch_assoc())
-        {
-            $result_filepath = $row['filepath'];
-            $result_iv = $row['iv'];
-            $result_tag = $row['tag'];
-        }
+        $result_filepath = $row['filepath'];
+        $result_iv = $row['iv'];
+        $result_tag = $row['tag'];
+    }
+
+    try {
+        $date = new DateTime('now', new DateTimeZone('UTC'));
+        $date_stamp = $date->format('is');
+    } catch (Exception $e) {
+        http_response_code(500);
+        exit;
     }
 
     $cipher = 'aes-128-gcm';
-
     $file_contents = file_get_contents($result_filepath);
-
-    $plain_text = openssl_decrypt($file_contents, $cipher, $passphrase, $options=0, $result_iv, $result_tag);
-
+    $plain_text = openssl_decrypt($file_contents, $cipher, $password, 0, $result_iv, $result_tag);
     $file_prefix = explode("@", $receiver_email);
-
-    $date = new DateTime('now', new DateTimeZone('UTC'));
-    $date_stamp = $date->format('is');
-
     $tmp_file = fopen('/tmp/' . $file_prefix[0] . $date_stamp . '.txt', 'w');
     $true_file_name = $file_prefix[0] . $date_stamp . '.txt';
 
@@ -47,15 +73,13 @@ if(isset($_POST['yourEmail']) and isset($_POST['password']))
 
     fclose($tmp_file);
 
-    $file_name = basename($tmp_file['name']);
-
     header('Content-Type: multi-part/form-data');
     header("Content-Disposition: attachment; filename=$true_file_name");
 
-    readfile('/tmp/' . $true_file_name);
-    unlink('/tmp/' . $true_file_name);
-
-
+    if(readfile('/tmp/' . $true_file_name)) {
+        unlink('/tmp/' . $true_file_name);
+        exit;
+    }
+    http_response_code(500);
     exit;
-
 }
