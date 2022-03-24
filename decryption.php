@@ -28,7 +28,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST')
     $password = $_POST['password'];
     $passphrase = $_POST['passphrase'];
 
-    $stmt = $mysqli->prepare('SELECT iv, filepath, tag FROM files WHERE passphrase = ? AND receiver_email = ?  LIMIT  1');
+    $stmt = $mysqli->prepare('SELECT iv, filepath, tag, file_ext FROM files WHERE passphrase = ? AND receiver_email = ?  LIMIT  1');
     $stmt->bind_param('ss', $passphrase, $receiver_email);
 
     if(!$stmt->execute())
@@ -46,12 +46,14 @@ if($_SERVER['REQUEST_METHOD'] == 'POST')
     $result_filepath = '';
     $result_iv = '';
     $result_tag = '';
+    $result_file_extension = '';
 
     while($row = $result->fetch_assoc())
     {
         $result_filepath = $row['filepath'];
         $result_iv = $row['iv'];
         $result_tag = $row['tag'];
+        $result_file_extension = $row['file_ext'];
     }
 
     try {
@@ -66,8 +68,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST')
     $file_contents = file_get_contents($result_filepath);
     $plain_text = openssl_decrypt($file_contents, $cipher, $password, 0, $result_iv, $result_tag);
     $file_prefix = explode("@", $receiver_email);
-    $tmp_file = fopen('/tmp/' . $file_prefix[0] . $date_stamp . '.txt', 'w');
-    $true_file_name = $file_prefix[0] . $date_stamp . '.txt';
+    $tmp_file = fopen('/tmp/' . $file_prefix[0] . $date_stamp . '.' . $result_file_extension, 'w');
+    $true_file_name = $file_prefix[0] . $date_stamp . '.' . $result_file_extension;
 
     fwrite($tmp_file, $plain_text);
 
