@@ -18,17 +18,10 @@ use Exception;
 use Encryption\Connection\DatabaseConnection;
 
 
-$site_title = 'Decrypt Your File';
-$active_page = 'decryption';
-$base_url = GlobalVars::$base_url;
-$additional_header_tags = array(
-    "<link rel='stylesheet' href='{$base_url}static/css/forms.css' >"
-);
-require_once 'template/header.php';
-
 if($_SERVER['REQUEST_METHOD'] == 'POST')
 {
-
+    session_start();
+    ValidationRules::validate_csrf_token();
     $receiver_email = ValidationRules::validate_email($_POST['yourEmail']);
     if(!$receiver_email) {
         http_response_code(500);
@@ -98,6 +91,14 @@ if($_SERVER['REQUEST_METHOD'] == 'POST')
     http_response_code(500);
     exit;
 }
+
+$site_title = 'Decrypt Your File';
+$active_page = 'decryption';
+$base_url = GlobalVars::$base_url;
+$additional_header_tags = array(
+    "<link rel='stylesheet' href='{$base_url}static/css/forms.css' >"
+);
+require_once 'template/header.php';
 
 
 ?>
