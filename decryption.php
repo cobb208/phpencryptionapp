@@ -1,20 +1,33 @@
 <?php
+/**
+ * @package File Encryption
+ * @license https://www.gnu.org/licenses/gpl-3.0.en.html
+ * @author Cory <cobb208@gmail.com>
+ */
+
 namespace Encryption\Decryption;
 
-require_once('connection.php');
-require_once('validation.php');
-
+require_once 'connection.php';
+require_once 'validation.php';
+require_once 'globals.php';
 use DateTime;
 use DateTimeZone;
+use Encryption\Globals\GlobalVars;
 use Encryption\Validation\ValidationRules;
 use Exception;
 use Encryption\Connection\DatabaseConnection;
 
 
+$site_title = 'Decrypt Your File';
+$active_page = 'decryption';
+$base_url = GlobalVars::$base_url;
+$additional_header_tags = array(
+    "<link rel='stylesheet' href='{$base_url}static/css/forms.css' >"
+);
+require_once 'template/header.php';
+
 if($_SERVER['REQUEST_METHOD'] == 'POST')
 {
-    session_start();
-    ValidationRules::validate_csrf_token();
 
     $receiver_email = ValidationRules::validate_email($_POST['yourEmail']);
     if(!$receiver_email) {
@@ -85,3 +98,36 @@ if($_SERVER['REQUEST_METHOD'] == 'POST')
     http_response_code(500);
     exit;
 }
+
+
+?>
+<article>
+    <h1>Decrypt Your File</h1>
+    <section id="sectionForm" class="center-it">
+        <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
+            <?php ValidationRules::generate_csrf_form_token(); ?>
+            <fieldset>
+                <legend>Emails</legend>
+                <div class="form-input-block">
+                    <label for="yourEmail">Your Email:</label>
+                    <input type="email" name="yourEmail" id="yourEmail" required placeholder="your_email@mail.com"/>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Passcodes</legend>
+                <div class="form-input-block">
+                    <label for="retrievePassword">Enter the Pass Phrase:</label>
+                    <input type="password" id="retrievePassword" name="password" required/>
+                </div>
+                <div class="form-input-block">
+                    <label for="passphrase">Unique Code:</label>
+                    <input type="password" id="passphrase" name="passphrase" />
+                </div>
+                <input type="submit" value="Retrieve" />
+            </fieldset>
+        </form>
+    </section>
+</article>
+
+<?php
+require_once 'template/footer.php';

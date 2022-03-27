@@ -1,0 +1,33 @@
+#sectionForm {
+    width: 50%;
+}
+@media screen and (max-width: 992px) {
+    #sectionForm {
+        width: 100%;
+    }
+}
+
+fieldset {
+    margin: 1rem 0;
+}
+
+legend {
+    font-weight: bolder;
+}
+
+div.form-input-block {
+    padding: 1rem 0;
+}
+
+div.form-input-block label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: bold;
+}
+
+input[type=submit] {
+    border-radius: 0.25rem;
+    padding: 0.5rem 1rem;
+    background-color: blue;
+    color: white;
+}
