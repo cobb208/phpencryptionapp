@@ -3,20 +3,18 @@ namespace Encryption\Index;
 require_once('template/header.php');
 require_once('connection.php');
 require_once('validation.php');
+require_once('globals.php');
 
 use DateTime;
 use DateTimeZone;
 use Encryption\Validation\ValidationRules;
 use Exception;
+use Encryption\Connection\DatabaseConnection;
+use Encryption\Globals\GlobalVars;
 
 $error_list = array();
 
 if($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    if(!isset($mysqli)) {
-        http_response_code(500);
-        exit();
-    }
 
     $sender_email = '';
     $receiver_email = '';
@@ -58,6 +56,9 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $passphrase = uniqid();
 
+        $db = new DatabaseConnection();
+        $mysqli = $db->mysqli;
+
         $stmt = $mysqli->prepare(
             "INSERT INTO files(iv, filepath, sender_email, receiver_email, created_at, tag, file_ext, passphrase)
             VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
@@ -82,7 +83,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 
-<form action="http://localhost/encryption/index.php" method="post" enctype="multipart/form-data">
+<form action="<?php echo GlobalVars::$base_url ?>encryption/index.php" method="post" enctype="multipart/form-data">
     <?php ValidationRules::generate_csrf_form_token(); ?>
     <fieldset>
         <legend>Emails</legend>
@@ -133,7 +134,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <h1>Retrieve</h1>
 
-<form action="http://localhost/encryption/decryption.php" method="post">
+<form action="<?php echo GlobalVars::$base_url ?>encryption/decryption.php" method="post">
     <?php ValidationRules::generate_csrf_form_token(); ?>
     <fieldset>
         <legend>Emails</legend>

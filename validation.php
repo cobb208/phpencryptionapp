@@ -21,7 +21,6 @@ class ValidationRules {
         if($_SERVER['REQUEST_METHOD'] === 'POST' or $_SERVER['REQUEST_METHOD'] === 'post')
         {
             $token = $_POST['csrf_token'];
-
             if(!$token or $token !== $_SESSION['csrf_token'])
             {
                 http_response_code(403);

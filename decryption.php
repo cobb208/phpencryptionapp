@@ -8,16 +8,13 @@ use DateTime;
 use DateTimeZone;
 use Encryption\Validation\ValidationRules;
 use Exception;
+use Encryption\Connection\DatabaseConnection;
+
 
 if($_SERVER['REQUEST_METHOD'] == 'POST')
 {
     session_start();
     ValidationRules::validate_csrf_token();
-
-    if(!isset($mysqli)) {
-        http_response_code(500);
-        exit();
-    }
 
     $receiver_email = ValidationRules::validate_email($_POST['yourEmail']);
     if(!$receiver_email) {
@@ -27,6 +24,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST')
 
     $password = $_POST['password'];
     $passphrase = $_POST['passphrase'];
+
+    $db = new DatabaseConnection();
+    $mysqli = $db->mysqli;
 
     $stmt = $mysqli->prepare('SELECT iv, filepath, tag, file_ext FROM files WHERE passphrase = ? AND receiver_email = ?  LIMIT  1');
     $stmt->bind_param('ss', $passphrase, $receiver_email);
